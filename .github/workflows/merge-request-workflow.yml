@@ -50,23 +50,28 @@ jobs:
   deploy-image:
     needs: build-push-image
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to AWS-EC2
+      - name: Deploy to AWS EC2
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER_NAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          debug: true
           script: |
             BUILD_ENVIRONMENT=${{ needs.build-push-image.outputs.build_env }}
             SHA_SHORT=${{ needs.build-push-image.outputs.sha_short }}
 
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
-            cd example-app-environments
-            pwd
-            source .env
+            cd example-app-environments || { echo "❌ Folder example-app-environments not found"; exit 1; }
+
+            if [ -f ".env" ]; then
+              source .env
+            else
+              echo "❌ .env file not found"
+              exit 1
+            fi
 
             if [ "$BUILD_ENVIRONMENT" == "production" ]; then
               sed -i "s/^PRODUCTION_APP_IMAGE_TAG=.*/PRODUCTION_APP_IMAGE_TAG=$SHA_SHORT/" .env
@@ -77,21 +82,34 @@ jobs:
             elif [ "$BUILD_ENVIRONMENT" == "develop" ]; then
               sed -i "s/^DEVELOP_APP_IMAGE_TAG=.*/DEVELOP_APP_IMAGE_TAG=$SHA_SHORT/" .env
               container_name="$DEVELOP_CONTAINER_NAME"
+            else
+              echo "❌ Unknown build environment"
+              exit 1
             fi
 
-            if [ "$(docker ps -f name=$container_name -q)" ]; then
-              docker stop $container_name
+            if [ -n "$container_name" ]; then
+              if [ "$(docker ps -f name=$container_name -q)" ]; then
+                docker stop $container_name
+              fi
+
+              old_image=$(docker ps -a -f name=$container_name --format "{{.Image}}")
+
+              if [ "$(docker ps -a -f name=$container_name -q)" ]; then
+                docker rm $container_name
+              fi
+
+              if [ -n "$old_image" ]; then
+                docker rmi -f $old_image
+              fi
+            else
+              echo "⚠️ container_name is empty"
             fi
 
-            old_image=$(docker ps -a -f name=$container_name --format "{{.Image}}")
-
-            if [ "$(docker ps -a -f name=$container_name -q)" ]; then
-              docker rm $container_name
+            if [ -f "docker-compose.yml" ]; then
+              docker-compose up $BUILD_ENVIRONMENT --build -d
+            else
+              echo "❌ docker-compose.yml not found"
+              exit 1
             fi
 
-            if [ -n "$old_image" ]; then
-              docker rmi $old_image
-            fi
-
-            docker-compose up $BUILD_ENVIRONMENT --build -d
             docker logout
