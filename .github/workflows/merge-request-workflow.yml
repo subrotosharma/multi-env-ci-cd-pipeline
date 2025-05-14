@@ -50,9 +50,10 @@ jobs:
   deploy-image:
     needs: build-push-image
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy to AWS-EC2
-        uses: appleboy/ssh-action@main
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER_NAME }}
@@ -60,7 +61,7 @@ jobs:
           script: |
             BUILD_ENVIRONMENT=${{ needs.build-push-image.outputs.build_env }}
             SHA_SHORT=${{ needs.build-push-image.outputs.sha_short }}
-            
+
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
             cd example-app-environments
