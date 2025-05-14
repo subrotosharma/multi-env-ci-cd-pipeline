@@ -1,0 +1,62 @@
+version: "3.0"
+
+services:
+  production:
+    image: ${APP_IMAGE_NAME}:${PRODUCTION_APP_IMAGE_TAG}
+    container_name: ${PRODUCTION_CONTAINER_NAME}
+    environment:
+      - PORT=3000
+      - REDIS_HOST=${PRODUCTION_REDIS_HOST}
+      - REDIS_PORT=${PRODUCTION_REDIS_PORT}
+      - POSTGRES_USER=${PRODUCTION_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${PRODUCTION_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${PRODUCTION_POSTGRES_DB}
+      - POSTGRES_HOST=${PRODUCTION_POSTGRES_HOST}
+      - POSTGRES_PORT=${PRODUCTION_POSTGRES_PORT}
+    ports:
+      - "${PRODUCTION_APP_PORT}:3000"
+    networks:
+      - example-app-production-network
+    restart: unless-stopped
+
+  staging:
+    image: ${APP_IMAGE_NAME}:${STAGING_APP_IMAGE_TAG}
+    container_name: ${STAGING_CONTAINER_NAME}
+    environment:
+      - REDIS_HOST=${STAGING_REDIS_HOST}
+      - REDIS_PORT=${STAGING_REDIS_PORT}
+      - POSTGRES_USER=${STAGING_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${STAGING_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${STAGING_POSTGRES_DB}
+      - POSTGRES_HOST=${STAGING_POSTGRES_HOST}
+      - POSTGRES_PORT=${STAGING_POSTGRES_PORT}
+    ports:
+      - "${STAGING_APP_PORT}:3000"
+    networks:
+      - example-app-staging-network
+    restart: unless-stopped
+
+  develop:
+    image: ${APP_IMAGE_NAME}:${DEVELOP_APP_IMAGE_TAG}
+    container_name: ${DEVELOP_CONTAINER_NAME}
+    environment:
+      - REDIS_HOST=${DEVELOP_REDIS_HOST}
+      - REDIS_PORT=${DEVELOP_REDIS_PORT}
+      - POSTGRES_USER=${DEVELOP_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${DEVELOP_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${DEVELOP_POSTGRES_DB}
+      - POSTGRES_HOST=${DEVELOP_POSTGRES_HOST}
+      - POSTGRES_PORT=${DEVELOP_POSTGRES_PORT}
+    ports:
+      - "${DEVELOP_APP_PORT}:3000"
+    networks:
+      - example-app-develop-network
+    restart: unless-stopped
+
+networks:
+  example-app-production-network:
+    external: true
+  example-app-staging-network:
+    external: true
+  example-app-develop-network:
+    external: true

@@ -1,0 +1,56 @@
+version: "3.0"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres-container
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - postgres_14_data:/var/lib/postgresql/data
+    networks:
+      - example-app-production-network
+      - example-app-staging-network
+      - example-app-develop-network
+
+  redis-production:
+    image: redis
+    container_name: redis-container-production
+    restart: unless-stopped
+    ports:
+      - "6370:6379"
+    networks:
+      - example-app-production-network
+
+  redis-staging:
+    image: redis
+    container_name: redis-container-staging
+    restart: unless-stopped
+    ports:
+      - "6371:6379"
+    networks:
+      - example-app-staging-network
+
+  redis-develop:
+    image: redis
+    container_name: redis-container-develop
+    restart: unless-stopped
+    ports:
+      - "6372:6379"
+    networks:
+      - example-app-develop-network
+
+networks:
+  example-app-production-network:
+    name: example-app-production-network
+  example-app-staging-network:
+    name: example-app-staging-network
+  example-app-develop-network:
+    name: example-app-develop-network
+
+volumes:
+  postgres_14_data:
