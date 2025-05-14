@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
+#omit dev environment
 RUN npm ci --omit=dev
 
 COPY . .
